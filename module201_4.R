@@ -212,7 +212,7 @@ ggarrange(p1, p2, p3, text.p, ncol=1,
 ## ----download_from_github--------------------------------------------------------------
 ## install from Github
 # remove the hash tag to run. 
-# devtools::install_github("jespermaag/gganatogram")
+devtools::install_github("jespermaag/gganatogram")
 library(gganatogram)
 library(dplyr)
 library(viridis)
@@ -234,14 +234,129 @@ gganatogram(data=organPlot, fillOutline='#a6bddb', organism='human', sex='female
 ## # download drawProteins from Bioconductor
 ## # install BiocManager
 ## # install.packages("BiocManager")
-## # BiocManager::install("drawProteins")
+BiocManager::install("drawProteins")
 ## 
-## library(drawProteins)
+library(drawProteins)
 ## # show the vignette for drawProteins in the Help tab
-## vignette("drawProteins_BiocStyle")
+vignette("drawProteins_BiocStyle")
 ## # sample code is in the vignette... explore it.
 ## 
 ## # integrate your learning by adding the code and output to your RMarkdown file
 ## # and/or the Github page you created above...
 
+drawProteins::get_features("Q04206") ->
+  rel_json
+
+drawProteins::feature_to_dataframe(rel_json) -> rel_data
+head(rel_data[1:4])
+
+draw_canvas(rel_data) -> p ## creates background
+p
+p <- draw_chains(p, rel_data) ## adds aminoacid chain
+p
+p <- draw_domains(p, rel_data) ## adds domain
+p
+
+# white background and remove y-axis
+p <- p + theme_bw(base_size = 20) + # white background
+  theme(panel.grid.minor=element_blank(), 
+        panel.grid.major=element_blank()) +
+  theme(axis.ticks = element_blank(), 
+        axis.text.y = element_blank()) +
+  theme(panel.border = element_blank())
+p
+draw_regions(p, rel_data) ## adds more domains
+
+draw_repeat(p, rel_data) ## hasnt added anything
+
+draw_motif(p, rel_data) # adds 9aa Transactivation domain & NLS
+
+# add phosphorylation sites from Uniprot
+draw_phospho(p, rel_data, size = 6)
+
+## putting it all together
+draw_canvas(rel_data) -> p ## creates background
+p <- draw_chains(p, rel_data) ## adds chains
+p <- draw_domains(p, rel_data) ## adds domains
+p <- draw_regions(p, rel_data) ## adds regions
+p <- draw_motif(p, rel_data) ## adds motifs
+p <- draw_phospho(p, rel_data, size = 8) ## shows sites of phosphoryllations
+
+p <- p + theme_bw(base_size = 20) + # white backgnd & change text size
+  theme(panel.grid.minor=element_blank(), 
+        panel.grid.major=element_blank()) +
+  theme(axis.ticks = element_blank(), 
+        axis.text.y = element_blank()) +
+  theme(panel.border = element_blank())
+p
+# add titles
+rel_subtitle <- paste0("circles = phosphorylation sites\n",
+                       "RHD = Rel Homology Domain\nsource:Uniprot")
+
+p <- p + labs(title = "Rel A/p65",
+              subtitle = rel_subtitle)
+p
+
+# accession numbers of five NF-kappaB proteins
+prot_data <- drawProteins::get_features("Q04206 Q01201 Q04864 P19838 Q00653")
+
+prot_data <- drawProteins::feature_to_dataframe(prot_data)
+
+p <- draw_canvas(prot_data)
+p <- draw_chains(p, prot_data)
+p <- draw_domains(p, prot_data)
+p <- draw_repeat(p, prot_data)
+p <- draw_motif(p, prot_data)
+p <- draw_phospho(p, prot_data, size = 8)
+
+# background and y-axis
+p <- p + theme_bw(base_size = 20) + # white backgnd & change text size
+  theme(panel.grid.minor=element_blank(),
+        panel.grid.major=element_blank()) +
+  theme(axis.ticks = element_blank(),
+        axis.text.y = element_blank()) +
+  theme(panel.border = element_blank())
+
+# add titles
+rel_subtitle <- paste0("circles = phosphorylation sites\n",
+                       "RHD = Rel Homology Domain\nsource:Uniprot")
+
+p <- p + labs(title = "Schematic of human NF-kappaB proteins",
+              subtitle = rel_subtitle)
+p
+
+# move legend to top
+p <- p + theme(legend.position="top") + labs(fill="")
+p
+
+data("five_rel_data")
+p <- draw_canvas(five_rel_data)
+p <- draw_chains(p, five_rel_data, 
+                 label_chains = FALSE,
+                 fill = "hotpink", 
+                 outline = "midnightblue")
+p
+
+p <- draw_canvas(five_rel_data)
+p <- draw_chains(p, five_rel_data, 
+                 fill = "lightsteelblue1", 
+                 outline = "grey", 
+                 label_size = 5) 
+p <- draw_phospho(p, five_rel_data, size = 10, fill = "red")
+p + theme_bw()
+
+p <- draw_canvas(five_rel_data)
+p <- draw_chains(p, five_rel_data, 
+                 fill = "lightsteelblue1", 
+                 outline = "grey",
+                 labels = c("p50/p105",
+                            "p50/p105",
+                            "p52/p100", 
+                            "p52/p100",
+                            "Rel B",
+                            "c-Rel", 
+                            "p65/Rel A"),
+                 label_size = 5) 
+p <- draw_phospho(p, five_rel_data, size = 8, fill = "red")
+p + theme_bw()
 
